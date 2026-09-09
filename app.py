@@ -9,11 +9,11 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- CSS MODERNO E CUSTOMIZADO (UX/UI PREMIUM) ---
+# --- CSS MODERNO E AJUSTES DE TIPOGRAFIA PARA PRINT ---
 st.markdown(
     """
 <style>
-    /* Estilo Geral e Fontes */
+    /* Estilo Geral */
     .stApp {
         background-color: #f4f6f9;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -40,7 +40,7 @@ st.markdown(
         font-size: 1rem;
     }
 
-    /* Podium Cards (Top 3) */
+    /* Podium Cards */
     .podium-box {
         text-align: center;
         padding: 20px;
@@ -48,24 +48,47 @@ st.markdown(
         background: #ffffff;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid #e1e8ed;
-        transition: transform 0.2s ease;
-    }
-    .podium-box:hover {
-        transform: translateY(-3px);
     }
 
-    /* Melhotia Visual das Tabelas Streamlit */
-    div[data-testid="stDataFrame"] {
-        background-color: #ffffff;
-        padding: 12px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    /* Container Customizado de Tabela HTML para Alta Visibilidade em Print */
+    .table-container-print {
+        width: 100%;
+        overflow-x: auto;
+        background: #ffffff;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #e1e8ed;
     }
-    
-    /* Estilização para Print/Captura */
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px !important; /* Tipografia Aumentada */
+        font-family: Arial, sans-serif;
+    }
+
+    .styled-table th {
+        background-color: #1e3c72 !important;
+        color: #ffffff !important;
+        font-weight: bold;
+        text-align: center;
+        padding: 8px 6px;
+        border: 1px solid #dcdcdc;
+    }
+
+    .styled-table td {
+        padding: 6px 4px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    /* Estilo de Impressão/Print */
     @media print {
-        .stSidebar { display: none; }
-        .stTabs [data-baseweb="tab-list"] { display: none; }
+        .stSidebar, .stTabs [data-baseweb="tab-list"] { display: none; }
+        .styled-table { font-size: 11px !important; }
     }
 </style>
 """,
@@ -187,7 +210,7 @@ df_ranking_f = df_ranking_f.sort_values(
 ).reset_index(drop=True)
 df_ranking_f["Posicao"] = df_ranking_f.index + 1
 
-# --- CABEÇALHO PRINCIPAL REFORMULADO ---
+# --- CABEÇALHO PRINCIPAL ---
 st.markdown(
     """
     <div class="main-header">
@@ -405,16 +428,13 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN (ALTA VISIBILIDADE & FORMATAÇÃO CONDICIONAL) ---
+# --- TAB 4: CONSOLIDADO POR RN (HTML/STYLING DE ALTA DENSIDADE E VISIBILIDADE) ---
 with tab4:
   st.subheader("📌 Matriz Consolidada por RN")
 
   df_piv_base = df_detalhado_f.copy()
 
-  # Mapeamento do valor numérico puro do % para aplicação da formatação condicional
-  df_piv_base["%_Num"] = df_piv_base["%"]
-
-  # Preparando textos formatados
+  # Formatação dos textos
   df_piv_base["Meta_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -444,13 +464,9 @@ with tab4:
       values=["Meta_Fmt", "Real_Fmt", "%_Fmt", "GAP_Fmt", "MN_Fmt"],
   )
 
-  # Inverte níveis para colocar Nome do KPI no topo e Métricas na subcoluna
+  # Inverte níveis para colocar Nome do KPI no topo
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
 
-  # Garante ordem exata das colunas por KPI
-  kpis_presentes = [
-      k for k in KPIS_OFICIAIS if k in df_pivot.columns.levels[0]
-  ]
   subcolunas_map = {
       "Meta_Fmt": "Meta",
       "Real_Fmt": "Real",
@@ -458,22 +474,49 @@ with tab4:
       "GAP_Fmt": "GAP",
       "MN_Fmt": "MN",
   }
-
   df_pivot = df_pivot.rename(columns=subcolunas_map, level=1)
-  ordem_subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
 
+  kpis_presentes = [
+      k for k in KPIS_OFICIAIS if k in df_pivot.columns.levels[0]
+  ]
+  ordem_subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
   novas_colunas = pd.MultiIndex.from_product(
       [kpis_presentes, ordem_subcolunas], names=["Indicador", None]
   )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
-  # Streamlit Column Config para Destaque e Formatação de Alta Visibilidade (Ideal para Print)
-  column_configuration = {}
-  for kpi in kpis_presentes:
-    pct_col = (kpi, "%")
-    column_configuration[pct_col] = st.column_config.TextColumn(
-        label="%",
-        help="Atingimento Percentual",
-    )
 
-  st.dataframe(df_pivot, use_container_width=True, height=520)
+  # Função de Formatação Condicional para a coluna %
+  def aplicar_cores_pivot(val):
+    # Destaque verde para atingimento e tom pastel para o restante
+    if isinstance(val, str) and "%" in val:
+      try:
+        num = float(
+            val.replace("%", "").replace(",", ".").replace(" ", "").strip()
+        )
+        if num >= 100.0:
+          return (
+              "background-color: #c6f6d5; color: #22543d; font-weight: bold;"
+          )
+        elif num >= 95.0:
+          return (
+              "background-color: #feebc8; color: #744210; font-weight: bold;"
+          )
+        else:
+          return "background-color: #fed7d7; color: #742a2a;"
+      except:
+        pass
+    return ""
+
+
+  # Aplicação do Styler do Pandas exportado em HTML puro para renderização perfeita
+  styler = df_pivot.style.applymap(aplicar_cores_pivot)
+
+  # Renderização da Tabela via HTML para controle absoluto de Font-Size e Cores no Print
+  html_table = styler.to_html()
+  html_table = html_table.replace('class="dataframe"', 'class="styled-table"')
+
+  st.markdown(
+      f'<div class="table-container-print">{html_table}</div>',
+      unsafe_allow_html=True,
+  )
