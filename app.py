@@ -101,7 +101,6 @@ KPIS_OFICIAIS = [
     "Tarefa de Cerveja Zero (apenas portfolio)",
     "Tarefa de Digitalização",
     "Atendimento Produtivo",
-    "KPIs OK",
     "Lojas Ideais",
 ]
 
@@ -361,9 +360,9 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN (LADO A LADO POR INDICADOR) ---
+# --- TAB 4: CONSOLIDADO POR RN (LADO A LADO: META | REAL | %) ---
 with tab4:
-  st.subheader("📌 Matriz Consolidada por RN (Visão em Colunas)")
+  st.subheader("📌 Matriz Consolidada por RN")
 
   col_btn1, col_btn2 = st.columns([1, 4])
   with col_btn1:
@@ -388,28 +387,29 @@ with tab4:
 
   df_piv_base = df_detalhado_f.copy()
 
-  df_piv_base["Meta_Str"] = np.where(
+  # Colunas formatadas para o Pivot
+  df_piv_base["Meta"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
       df_piv_base["Meta"].map("{:.0f}".format),
   )
-  df_piv_base["Real_Str"] = np.where(
+  df_piv_base["Real"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Real"].map("{:.1f}%".format).str.replace(".", ","),
       df_piv_base["Real"].map("{:.0f}".format),
   )
-  df_piv_base["Ating_Str"] = df_piv_base["%"].map("{:.1f}%".format).str.replace(
-      ".", ","
-  )
+  df_piv_base["%"] = df_piv_base["%"].map("{:.1f}%".format).str.replace(".", ",")
 
+  # Pivotagem com ordenação exata de subcolunas: Meta | Real | %
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
-      values=["Meta_Str", "Real_Str", "Ating_Str"],
+      values=["Meta", "Real", "%"],
   )
 
-  df_pivot = df_pivot.swaplevel(0, 1, axis=1)
-  df_pivot.sort_index(axis=1, level=0, inplace=True)
+  # Reorganiza o nível do cabeçalho para: Indicador -> (Meta | Real | %)
+  df_pivot = df_pivot.reorder_levels([1, 0], axis=1)
+  df_pivot = df_pivot.sort_index(axis=1, level=0)
 
   st.dataframe(df_pivot, use_container_width=True)
 
