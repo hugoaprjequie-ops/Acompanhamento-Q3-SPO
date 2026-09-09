@@ -364,7 +364,7 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN (AGRUPADO POR KPI: META | REAL | % | GAP | MN) ---
+# --- TAB 4: CONSOLIDADO POR RN (AGRUPADO POR KPI NO TOPO: META | REAL | % | GAP | MN) ---
 with tab4:
   st.subheader("📌 Matriz Consolidada por RN")
 
@@ -391,7 +391,7 @@ with tab4:
 
   df_piv_base = df_detalhado_f.copy()
 
-  # Formatação dos valores das colunas
+  # Formatação dos campos
   df_piv_base["Meta"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -412,19 +412,27 @@ with tab4:
       ".", ","
   )
 
-  # 1. Pivotagem inicial mantendo o Indicador nas colunas
+  # 1. Pivot inicial
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
       values=["Meta", "Real", "%", "GAP", "MN"],
   )
 
-  # 2. Inverte níveis para colocar o Nome do KPI no nível superior do cabeçalho
+  # 2. Inverte para colocar Indicador no Nível 0 (Topo) e Métricas no Nível 1 (Baixo)
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
 
-  # 3. Força a ordem exata das subcolunas dentro de cada KPI: Meta -> Real -> % -> GAP -> MN
-  ordem_subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
-  df_pivot = df_pivot.reindex(columns=ordem_subcolunas, level=1)
+  # 3. Constroi a ordem de colunas exata para cada KPI ter Meta -> Real -> % -> GAP -> MN
+  kpis_presentes = [
+      k for k in KPIS_OFICIAIS if k in df_pivot.columns.levels[0]
+  ]
+  subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
+  novas_colunas = pd.MultiIndex.from_product(
+      [kpis_presentes, subcolunas], names=["Indicador", None]
+  )
+
+  # 4. Aplica a reindexação estruturada
+  df_pivot = df_pivot.reindex(columns=novas_colunas)
 
   st.dataframe(df_pivot, use_container_width=True)
 
