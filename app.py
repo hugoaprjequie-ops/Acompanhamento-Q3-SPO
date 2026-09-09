@@ -428,7 +428,7 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN (HTML/STYLING DE ALTA DENSIDADE E VISIBILIDADE) ---
+# --- TAB 4: CONSOLIDADO POR RN ---
 with tab4:
   st.subheader("📌 Matriz Consolidada por RN")
 
@@ -485,10 +485,8 @@ with tab4:
   )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
-
   # Função de Formatação Condicional para a coluna %
   def aplicar_cores_pivot(val):
-    # Destaque verde para atingimento e tom pastel para o restante
     if isinstance(val, str) and "%" in val:
       try:
         num = float(
@@ -508,11 +506,13 @@ with tab4:
         pass
     return ""
 
+  # Compatibilidade Pandas 2.1+: usa .map() se existir, senão faz fallback para .applymap()
+  if hasattr(df_pivot.style, "map"):
+    styler = df_pivot.style.map(aplicar_cores_pivot)
+  else:
+    styler = df_pivot.style.applymap(aplicar_cores_pivot)
 
-  # Aplicação do Styler do Pandas exportado em HTML puro para renderização perfeita
-  styler = df_pivot.style.applymap(aplicar_cores_pivot)
-
-  # Renderização da Tabela via HTML para controle absoluto de Font-Size e Cores no Print
+  # Renderização da Tabela via HTML
   html_table = styler.to_html()
   html_table = html_table.replace('class="dataframe"', 'class="styled-table"')
 
