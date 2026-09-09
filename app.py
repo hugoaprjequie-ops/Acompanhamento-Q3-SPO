@@ -8,18 +8,6 @@ st.set_page_config(
     page_icon="🏆",
     layout="wide",
 )
-
-# --- IMAGEM NO HEADER ---
-# Substitua pelo caminho da sua imagem salva no GitHub ou URL direta
-try:
-    st.image("header_hurdles.png", use_container_width=True)
-except Exception:
-    # Caso a imagem ainda não esteja na pasta local, tenta carregar via URL do repositório
-    st.image(
-        "https://github.com/hugoaprjequie-ops/Acompanhamento-Q3-SPO/blob/main/4d040808-a146-4bd0-b079-9d95b6195549.jpg",
-        use_container_width=True,
-    )
-
 # Estilização CSS customizada
 st.markdown(
     """
