@@ -74,12 +74,16 @@ def carregar_dados():
 
   if "GV" not in df_ranking.columns:
     df_ranking["GV"] = np.where(
-        df_ranking["Setor"].isin(SETORES_GV2), "GV 2", "GV 1"
+        df_ranking["Setor"].astype(str).isin([str(x) for x in SETORES_GV2]),
+        "GV 2",
+        "GV 1",
     )
 
   if "GV" not in df_detalhado.columns:
     df_detalhado["GV"] = np.where(
-        df_detalhado["Setor"].isin(SETORES_GV2), "GV 2", "GV 1"
+        df_detalhado["Setor"].astype(str).isin([str(x) for x in SETORES_GV2]),
+        "GV 2",
+        "GV 1",
     )
 
   return df_ranking, df_detalhado
@@ -360,7 +364,7 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN (LADO A LADO: META | REAL | %) ---
+# --- TAB 4: CONSOLIDADO POR RN (LADO A LADO: META | REAL | % | GAP | MN) ---
 with tab4:
   st.subheader("📌 Matriz Consolidada por RN")
 
@@ -387,7 +391,6 @@ with tab4:
 
   df_piv_base = df_detalhado_f.copy()
 
-  # Colunas formatadas para o Pivot
   df_piv_base["Meta"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -399,17 +402,26 @@ with tab4:
       df_piv_base["Real"].map("{:.0f}".format),
   )
   df_piv_base["%"] = df_piv_base["%"].map("{:.1f}%".format).str.replace(".", ",")
+  df_piv_base["GAP"] = np.where(
+      df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
+      df_piv_base["GAP"].map("{:.1f}%".format).str.replace(".", ","),
+      df_piv_base["GAP"].map("{:.2f}".format).str.replace(".", ","),
+  )
+  df_piv_base["MN"] = df_piv_base["MN"].map("{:.2f}".format).str.replace(
+      ".", ","
+  )
 
-  # Pivotagem com ordenação exata de subcolunas: Meta | Real | %
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
-      values=["Meta", "Real", "%"],
+      values=["Meta", "Real", "%", "GAP", "MN"],
   )
 
-  # Reorganiza o nível do cabeçalho para: Indicador -> (Meta | Real | %)
   df_pivot = df_pivot.reorder_levels([1, 0], axis=1)
-  df_pivot = df_pivot.sort_index(axis=1, level=0)
+
+  # Sequência oficial exigida para as subcolunas
+  ordem_subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
+  df_pivot = df_pivot.reindex(columns=ordem_subcolunas, level=1)
 
   st.dataframe(df_pivot, use_container_width=True)
 
