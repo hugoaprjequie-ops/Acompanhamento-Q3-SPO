@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Imagem do Header
+# Header
 try:
   image = Image.open("4d040808-a146-4bd0-b079-9d95b6195549.jpg")
   st.image(image, use_container_width=True)
@@ -93,11 +93,8 @@ except Exception as e:
   st.error(f"Erro ao carregar os dados: {e}")
   st.stop()
 
-# Lista Oficial dos 10 KPIs para exibição
 KPIS_OFICIAIS = [
-    "Rotina + (Excelente)",
-    "Rotina + (Mediano)",
-    "Rotina + (Crítico)",
+    "Rotina +",
     "Aderência de Política Comercial",
     "Execução Menu",
     "Tasks de Faturamento Score 5",
@@ -107,6 +104,13 @@ KPIS_OFICIAIS = [
     "Tarefa de Digitalização",
     "Atendimento Produtivo",
     "KPIs OK",
+    "Lojas Ideais",
+]
+
+KPIS_PERCENTUAIS = [
+    "Execução Menu",
+    "Tarefa de Digitalização",
+    "Aderência de Política Comercial",
     "Lojas Ideais",
 ]
 
@@ -263,44 +267,50 @@ with tab1:
       hide_index=True,
   )
 
-# --- TAB 2: METAS E GAPS POR INDICADOR (CORRIGIDO SOMA VS MÉDIA) ---
+# --- TAB 2: METAS E GAPS POR INDICADOR ---
 with tab2:
   st.subheader("Desempenho Consolidado por Indicador")
 
-  # Filtra apenas os KPIs Oficiais
   df_kpi_filtered = df_detalhado_f[
       df_detalhado_f["Indicador"].isin(KPIS_OFICIAIS)
   ].copy()
 
-  KPIS_PERCENTUAIS = [
-      "Execução Menu",
-      "Tarefa de Digitalização",
-      "Aderência de Política Comercial",
-      "Lojas Ideais",
-  ]
-
-  # Lógica de Agregação: Média para Percentuais, Soma para Quantitativos
   list_kpi_resumo = []
-  for ind, group in df_kpi_filtered.groupby("Indicador"):
+  for ind in KPIS_OFICIAIS:
+    group = df_kpi_filtered[df_kpi_filtered["Indicador"] == ind]
+    if group.empty:
+      continue
+
     is_pct = ind in KPIS_PERCENTUAIS
 
     if is_pct:
       meta_val = group["Meta"].mean()
       real_val = group["Real"].mean()
+      meta_fmt = f"{meta_val:.1f}%".replace(".", ",")
+      real_fmt = f"{real_val:.1f}%".replace(".", ",")
+      gap_fmt = f"{max(meta_val - real_val, 0):.1f}%".replace(".", ",")
+    elif ind == "Rotina +":
+      meta_val = 27.0
+      real_val = group["Real"].sum()
+      meta_fmt = "27,00"
+      real_fmt = f"{int(real_val)},00"
+      gap_fmt = f"{max(meta_val - real_val, 0):.2f}".replace(".", ",")
     else:
       meta_val = group["Meta"].sum()
       real_val = group["Real"].sum()
+      meta_fmt = f"{meta_val:.2f}".replace(".", ",")
+      real_fmt = f"{real_val:.2f}".replace(".", ",")
+      gap_fmt = f"{max(meta_val - real_val, 0):.2f}".replace(".", ",")
 
-    gap_val = max(meta_val - real_val, 0)
     ating_val = (real_val / meta_val * 100) if meta_val > 0 else 0
     pts_val = group["Pontos"].sum()
 
     list_kpi_resumo.append({
         "Indicador": ind,
-        "Meta Total": f"{meta_val:.1f}%" if is_pct else f"{meta_val:.2f}",
-        "Realizado Total": f"{real_val:.1f}%" if is_pct else f"{real_val:.2f}",
-        "% Atingimento": f"{ating_val:.1f}%",
-        "GAP Total": f"{gap_val:.1f}%" if is_pct else f"{gap_val:.2f}",
+        "Meta Total": meta_fmt,
+        "Realizado Total": real_fmt,
+        "% Atingimento": f"{ating_val:.1f}%".replace(".", ","),
+        "GAP Total": gap_fmt,
         "Pontos Totais Gerados": int(pts_val),
     })
 
@@ -314,13 +324,13 @@ with tab3:
   df_vis_det = df_detalhado_f.copy()
   df_vis_det["Meta_Fmt"] = np.where(
       df_vis_det["Indicador"].isin(KPIS_PERCENTUAIS),
-      df_vis_det["Meta"].map("{:.1f}%".format),
-      df_vis_det["Meta"].map("{:.2f}".format),
+      df_vis_det["Meta"].map("{:.1f}%".format).str.replace(".", ","),
+      df_vis_det["Meta"].map("{:.2f}".format).str.replace(".", ","),
   )
   df_vis_det["Real_Fmt"] = np.where(
       df_vis_det["Indicador"].isin(KPIS_PERCENTUAIS),
-      df_vis_det["Real"].map("{:.1f}%".format),
-      df_vis_det["Real"].map("{:.2f}".format),
+      df_vis_det["Real"].map("{:.1f}%".format).str.replace(".", ","),
+      df_vis_det["Real"].map("{:.2f}".format).str.replace(".", ","),
   )
 
   st.dataframe(
@@ -353,13 +363,12 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN + BOTÃO DE PRINT ---
+# --- TAB 4: CONSOLIDADO POR RN (MATRIZ LADO A LADO POR INDICADOR) ---
 with tab4:
-  st.subheader("📌 Matriz Consolidada por RN")
+  st.subheader("📌 Matriz Consolidada por RN (Visão em Colunas)")
 
   col_btn1, col_btn2 = st.columns([1, 4])
   with col_btn1:
-    # Botão com JS nativo para disparar a janela de impressão/PDF do navegador
     st.markdown(
         """
         <button onclick="window.print()" style="
@@ -379,32 +388,35 @@ with tab4:
 
   st.markdown('<div id="print-area">', unsafe_allow_html=True)
 
-  df_tab4 = df_detalhado_f.copy()
-  df_tab4["Meta"] = np.where(
-      df_tab4["Indicador"].isin(KPIS_PERCENTUAIS),
-      df_tab4["Meta"].map("{:.1f}%".format),
-      df_tab4["Meta"].map("{:.2f}".format),
+  # Prepara dados para o pivot
+  df_piv_base = df_detalhado_f.copy()
+
+  # Formatação personalizada de Meta e Real antes de pivocar
+  df_piv_base["Meta_Str"] = np.where(
+      df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
+      df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
+      df_piv_base["Meta"].map("{:.0f}".format),
   )
-  df_tab4["Real"] = np.where(
-      df_tab4["Indicador"].isin(KPIS_PERCENTUAIS),
-      df_tab4["Real"].map("{:.1f}%".format),
-      df_tab4["Real"].map("{:.2f}".format),
+  df_piv_base["Real_Str"] = np.where(
+      df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
+      df_piv_base["Real"].map("{:.1f}%".format).str.replace(".", ","),
+      df_piv_base["Real"].map("{:.0f}".format),
+  )
+  df_piv_base["Ating_Str"] = df_piv_base["%"].map("{:.1f}%".format).str.replace(
+      ".", ","
   )
 
-  st.dataframe(
-      df_tab4[[
-          "Unidade",
-          "Setor",
-          "Indicador",
-          "Meta",
-          "Real",
-          "%",
-          "GAP",
-          "MN",
-      ]],
-      column_config={"%": st.column_config.NumberColumn("%", format="%.1f%%")},
-      use_container_width=True,
-      hide_index=True,
+  # Pivot de Colunas Compostas (Indicador x Métricas)
+  df_pivot = df_piv_base.pivot(
+      index=["Unidade", "Setor"],
+      columns="Indicador",
+      values=["Meta_Str", "Real_Str", "Ating_Str"],
   )
+
+  # Reorganiza o cabeçalho composto para ficar estilo relatório (Meta | Valid | %)
+  df_pivot = df_pivot.swaplevel(0, 1, axis=1)
+  df_pivot.sort_index(axis=1, level=0, inplace=True)
+
+  st.dataframe(df_pivot, use_container_width=True)
 
   st.markdown("</div>", unsafe_allow_html=True)
