@@ -1,38 +1,71 @@
 import numpy as np
 import pandas as pd
-from PIL import Image
 import streamlit as st
 
+# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Acompanhamento GP7 - Ranking & Indicadores",
+    page_title="Incentivo SPO Q3 - Performance & Gamificação",
     page_icon="🏆",
     layout="wide",
 )
 
-try:
-  image = Image.open("4d040808-a146-4bd0-b079-9d95b6195549.jpg")
-  st.image(image, use_container_width=True)
-except Exception:
-  st.image(
-      "https://raw.githubusercontent.com/hugoaprjequie-ops/Acompanhamento-Q3-SPO/main/4d040808-a146-4bd0-b079-9d95b6195549.jpg",
-      use_container_width=True,
-  )
-
+# --- CSS MODERNO E CUSTOMIZADO (UX/UI PREMIUM) ---
 st.markdown(
     """
 <style>
+    /* Estilo Geral e Fontes */
+    .stApp {
+        background-color: #f4f6f9;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    /* Header Principal */
+    .main-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 24px;
+        border-radius: 12px;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .main-header h1 {
+        color: #ffffff !important;
+        font-weight: 800;
+        margin: 0;
+        font-size: 2.2rem;
+    }
+    .main-header p {
+        color: #e0e6ed;
+        margin-top: 5px;
+        font-size: 1rem;
+    }
+
+    /* Podium Cards (Top 3) */
     .podium-box {
         text-align: center;
-        padding: 15px;
-        border-radius: 10px;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        margin-bottom: 15px;
+        padding: 20px;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid #e1e8ed;
+        transition: transform 0.2s ease;
     }
+    .podium-box:hover {
+        transform: translateY(-3px);
+    }
+
+    /* Melhotia Visual das Tabelas Streamlit */
+    div[data-testid="stDataFrame"] {
+        background-color: #ffffff;
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    
+    /* Estilização para Print/Captura */
     @media print {
-        body * { visibility: hidden; }
-        #print-area, #print-area * { visibility: visible; }
-        #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        .stSidebar { display: none; }
+        .stTabs [data-baseweb="tab-list"] { display: none; }
     }
 </style>
 """,
@@ -40,6 +73,7 @@ st.markdown(
 )
 
 
+# --- CARREGAMENTO DE DADOS ---
 @st.cache_data(ttl=60)
 def carregar_dados():
   id_ranking = "1dmqfmNxSlnbKDOQ-H-cW1UZkq6EoV1kZ"
@@ -115,7 +149,7 @@ KPIS_PERCENTUAIS = [
     "Lojas Ideais",
 ]
 
-# --- FILTROS ---
+# --- FILTROS DE NAVEGAÇÃO NA SIDEBAR ---
 st.sidebar.header("⚙️ Filtros de Navegação")
 
 unidades_disponiveis = ["Todas"] + list(df_ranking["Unidade"].unique())
@@ -153,13 +187,18 @@ df_ranking_f = df_ranking_f.sort_values(
 ).reset_index(drop=True)
 df_ranking_f["Posicao"] = df_ranking_f.index + 1
 
-# --- CABEÇALHO ---
-st.title("🏆 Painel de Gamificação e Performance GP7")
-st.caption(
-    "Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs"
+# --- CABEÇALHO PRINCIPAL REFORMULADO ---
+st.markdown(
+    """
+    <div class="main-header">
+        <h1>🏆 Incentivo SPO Q3</h1>
+        <p>Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs</p>
+    </div>
+""",
+    unsafe_allow_html=True,
 )
 
-# --- CARDS RESUMO ---
+# --- METRIC CARDS ---
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
@@ -183,8 +222,9 @@ with c4:
   elegiveis = len(df_ranking_f[df_ranking_f["%_Atingimento_Pontos"] >= 62.0])
   st.metric("RNs Elegíveis a Selos (≥62%)", f"{elegiveis}")
 
-st.markdown("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
+# --- NAVEGAÇÃO DE ABAS ---
 tab1, tab2, tab3, tab4 = st.tabs([
     "🥇 Ranking & Selos",
     "📊 Metas & GAPs por Indicador",
@@ -204,10 +244,10 @@ with tab1:
       st.markdown(
           f"""
             <div class="podium-box" style="border-top: 5px solid #ffd700;">
-                <h3>🥇 1º Lugar</h3>
-                <h4>Setor {top3.iloc[0]['Setor']} ({top3.iloc[0]['GV']})</h4>
-                <p><b>{top3.iloc[0]['Pontos_Acumulados']} Pts</b> ({top3.iloc[0]['%_Atingimento_Pontos']:.1f}%)</p>
-                <p>{top3.iloc[0]['Selo']}</p>
+                <h3 style="color:#d4af37; margin:0;">🥇 1º Lugar</h3>
+                <h4 style="margin:8px 0;">Setor {top3.iloc[0]['Setor']} ({top3.iloc[0]['GV']})</h4>
+                <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[0]['Pontos_Acumulados']} Pts</b> ({top3.iloc[0]['%_Atingimento_Pontos']:.1f}%)</p>
+                <p style="margin-top:5px;">{top3.iloc[0]['Selo']}</p>
             </div>
             """,
           unsafe_allow_html=True,
@@ -217,10 +257,10 @@ with tab1:
       st.markdown(
           f"""
             <div class="podium-box" style="border-top: 5px solid #c0c0c0;">
-                <h3>🥈 2º Lugar</h3>
-                <h4>Setor {top3.iloc[1]['Setor']} ({top3.iloc[1]['GV']})</h4>
-                <p><b>{top3.iloc[1]['Pontos_Acumulados']} Pts</b> ({top3.iloc[1]['%_Atingimento_Pontos']:.1f}%)</p>
-                <p>{top3.iloc[1]['Selo']}</p>
+                <h3 style="color:#8a8a8a; margin:0;">🥈 2º Lugar</h3>
+                <h4 style="margin:8px 0;">Setor {top3.iloc[1]['Setor']} ({top3.iloc[1]['GV']})</h4>
+                <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[1]['Pontos_Acumulados']} Pts</b> ({top3.iloc[1]['%_Atingimento_Pontos']:.1f}%)</p>
+                <p style="margin-top:5px;">{top3.iloc[1]['Selo']}</p>
             </div>
             """,
           unsafe_allow_html=True,
@@ -230,14 +270,15 @@ with tab1:
       st.markdown(
           f"""
             <div class="podium-box" style="border-top: 5px solid #cd7f32;">
-                <h3>🥉 3º Lugar</h3>
-                <h4>Setor {top3.iloc[2]['Setor']} ({top3.iloc[2]['GV']})</h4>
-                <p><b>{top3.iloc[2]['Pontos_Acumulados']} Pts</b> ({top3.iloc[2]['%_Atingimento_Pontos']:.1f}%)</p>
-                <p>{top3.iloc[2]['Selo']}</p>
+                <h3 style="color:#b06d29; margin:0;">🥉 3º Lugar</h3>
+                <h4 style="margin:8px 0;">Setor {top3.iloc[2]['Setor']} ({top3.iloc[2]['GV']})</h4>
+                <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[2]['Pontos_Acumulados']} Pts</b> ({top3.iloc[2]['%_Atingimento_Pontos']:.1f}%)</p>
+                <p style="margin-top:5px;">{top3.iloc[2]['Selo']}</p>
             </div>
             """,
           unsafe_allow_html=True,
       )
+    st.markdown("<br>", unsafe_allow_html=True)
 
   df_rank_display = df_ranking_f.copy()
   df_rank_display["%_Atingimento_Pontos"] = df_rank_display[
@@ -364,71 +405,75 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN ---
+# --- TAB 4: CONSOLIDADO POR RN (ALTA VISIBILIDADE & FORMATAÇÃO CONDICIONAL) ---
 with tab4:
   st.subheader("📌 Matriz Consolidada por RN")
 
-  col_btn1, col_btn2 = st.columns([1, 4])
-  with col_btn1:
-    st.markdown(
-        """
-        <button onclick="window.print()" style="
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;">
-            🖨️ Imprimir / Salvar PDF
-        </button>
-        """,
-        unsafe_allow_html=True,
-    )
-
-  st.markdown('<div id="print-area">', unsafe_allow_html=True)
-
   df_piv_base = df_detalhado_f.copy()
 
-  df_piv_base["Meta"] = np.where(
+  # Mapeamento do valor numérico puro do % para aplicação da formatação condicional
+  df_piv_base["%_Num"] = df_piv_base["%"]
+
+  # Preparando textos formatados
+  df_piv_base["Meta_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
       df_piv_base["Meta"].map("{:.0f}".format),
   )
-  df_piv_base["Real"] = np.where(
+  df_piv_base["Real_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Real"].map("{:.1f}%".format).str.replace(".", ","),
       df_piv_base["Real"].map("{:.0f}".format),
   )
-  df_piv_base["%"] = df_piv_base["%"].map("{:.1f}%".format).str.replace(".", ",")
-  df_piv_base["GAP"] = np.where(
+  df_piv_base["%_Fmt"] = (
+      df_piv_base["%"].map("{:.1f}%".format).str.replace(".", ",")
+  )
+  df_piv_base["GAP_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["GAP"].map("{:.1f}%".format).str.replace(".", ","),
       df_piv_base["GAP"].map("{:.2f}".format).str.replace(".", ","),
   )
-  df_piv_base["MN"] = df_piv_base["MN"].map("{:.2f}".format).str.replace(
+  df_piv_base["MN_Fmt"] = df_piv_base["MN"].map("{:.2f}".format).str.replace(
       ".", ","
   )
 
+  # Pivot para tabela
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
-      values=["Meta", "Real", "%", "GAP", "MN"],
+      values=["Meta_Fmt", "Real_Fmt", "%_Fmt", "GAP_Fmt", "MN_Fmt"],
   )
 
+  # Inverte níveis para colocar Nome do KPI no topo e Métricas na subcoluna
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
 
+  # Garante ordem exata das colunas por KPI
   kpis_presentes = [
       k for k in KPIS_OFICIAIS if k in df_pivot.columns.levels[0]
   ]
-  subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
-  novas_colunas = pd.MultiIndex.from_product(
-      [kpis_presentes, subcolunas], names=["Indicador", None]
-  )
+  subcolunas_map = {
+      "Meta_Fmt": "Meta",
+      "Real_Fmt": "Real",
+      "%_Fmt": "%",
+      "GAP_Fmt": "GAP",
+      "MN_Fmt": "MN",
+  }
 
+  df_pivot = df_pivot.rename(columns=subcolunas_map, level=1)
+  ordem_subcolunas = ["Meta", "Real", "%", "GAP", "MN"]
+
+  novas_colunas = pd.MultiIndex.from_product(
+      [kpis_presentes, ordem_subcolunas], names=["Indicador", None]
+  )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
-  st.dataframe(df_pivot, use_container_width=True)
+  # Streamlit Column Config para Destaque e Formatação de Alta Visibilidade (Ideal para Print)
+  column_configuration = {}
+  for kpi in kpis_presentes:
+    pct_col = (kpi, "%")
+    column_configuration[pct_col] = st.column_config.TextColumn(
+        label="%",
+        help="Atingimento Percentual",
+    )
 
-  st.markdown("</div>", unsafe_allow_html=True)
+  st.dataframe(df_pivot, use_container_width=True, height=520)
