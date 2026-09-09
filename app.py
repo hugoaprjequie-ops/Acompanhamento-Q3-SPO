@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Estilização CSS customizada para visualização de cartões e pódio
+# Estilização CSS customizada para o pódio e cartões de métricas
 st.markdown(
     """
 <style>
@@ -59,10 +59,10 @@ except Exception as e:
     )
     st.stop()
 
-# --- BARRA LATERAL: FILTROS ---
+# --- BARRA LATERAL: FILTROS NAVEGÁVEIS ---
 st.sidebar.header("⚙️ Filtros de Navegação")
 
-# Filtro por Unidade/Operação
+# 1. Filtro por Unidade / Operação
 unidades_disponiveis = ["Todas"] + list(df_ranking["Unidade"].unique())
 unidade_sel = st.sidebar.selectbox("Unidade / Operação:", unidades_disponiveis)
 
@@ -73,7 +73,17 @@ else:
     df_ranking_f = df_ranking.copy()
     df_detalhado_f = df_detalhado.copy()
 
-# Filtro por Setor / RN
+# 2. Filtro por Gerência de Vendas (GV)
+gvs_disponiveis = ["Todas"] + sorted(
+    list(df_ranking_f["GV"].dropna().unique())
+)
+gv_sel = st.sidebar.selectbox("Gerência de Vendas (GV):", gvs_disponiveis)
+
+if gv_sel != "Todas":
+    df_ranking_f = df_ranking_f[df_ranking_f["GV"] == gv_sel]
+    df_detalhado_f = df_detalhado_f[df_detalhado_f["GV"] == gv_sel]
+
+# 3. Filtro por Setor / RN
 setores_disponiveis = ["Todos"] + sorted(
     list(df_ranking_f["Setor"].astype(str).unique())
 )
@@ -87,13 +97,19 @@ if setor_sel != "Todos":
         df_detalhado_f["Setor"].astype(str) == setor_sel
     ]
 
-# --- CABEÇALHO DO PAINEL ---
+# Recalcula a posição dinâmica no ranking conforme os filtros selecionados
+df_ranking_f = df_ranking_f.sort_values(
+    by=["%_Atingimento_Pontos", "Pontos_Acumulados"], ascending=False
+).reset_index(drop=True)
+df_ranking_f["Posicao"] = df_ranking_f.index + 1
+
+# --- CABEÇALHO DO DASHBOARD ---
 st.title("🏆 Painel de Gamificação e Performance GP7")
 st.caption(
     "Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs (Sede Jequié e Filial Itapetinga)"
 )
 
-# --- CARDS DE RESUMO ---
+# --- CARDS RESUMO ---
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
@@ -113,7 +129,7 @@ with c3:
         if not df_ranking_f.empty
         else 0
     )
-    st.metric("Atingimento Médio de Pontos", f"{media_pct:.1f}%")
+    st.metric("Atingimento Médio", f"{media_pct:.1f}%")
 
 with c4:
     elegiveis = len(
@@ -123,7 +139,7 @@ with c4:
 
 st.markdown("---")
 
-# --- ABAS DE INTERFACE ---
+# --- ABAS DE NAVEGAÇÃO ---
 tab1, tab2, tab3 = st.tabs(
     ["🥇 Ranking & Selos", "📊 Metas & GAPs por Indicador", "📋 Visão Detalhada"]
 )
@@ -132,7 +148,7 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
     st.subheader("Leaderboard do Mês")
 
-    # Exibição do Pódio (Top 3) quando a visão geral estiver selecionada
+    # Exibição do Pódio (Top 3) quando múltiplos setores estiverem visíveis
     if len(df_ranking_f) >= 3 and setor_sel == "Todos":
         top3 = df_ranking_f.sort_values(by="Posicao").iloc[:3]
         col_p2, col_p1, col_p3 = st.columns(3)
@@ -142,7 +158,7 @@ with tab1:
                 f"""
             <div class="podium-box" style="border-top: 5px solid #ffd700;">
                 <h3>🥇 1º Lugar</h3>
-                <h4>Setor {top3.iloc[0]['Setor']}</h4>
+                <h4>Setor {top3.iloc[0]['Setor']} ({top3.iloc[0]['GV']})</h4>
                 <p><b>{top3.iloc[0]['Pontos_Acumulados']} Pts</b> ({top3.iloc[0]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p>{top3.iloc[0]['Selo']}</p>
             </div>
@@ -155,7 +171,7 @@ with tab1:
                 f"""
             <div class="podium-box" style="border-top: 5px solid #c0c0c0;">
                 <h3>🥈 2º Lugar</h3>
-                <h4>Setor {top3.iloc[1]['Setor']}</h4>
+                <h4>Setor {top3.iloc[1]['Setor']} ({top3.iloc[1]['GV']})</h4>
                 <p><b>{top3.iloc[1]['Pontos_Acumulados']} Pts</b> ({top3.iloc[1]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p>{top3.iloc[1]['Selo']}</p>
             </div>
@@ -168,7 +184,7 @@ with tab1:
                 f"""
             <div class="podium-box" style="border-top: 5px solid #cd7f32;">
                 <h3>🥉 3º Lugar</h3>
-                <h4>Setor {top3.iloc[2]['Setor']}</h4>
+                <h4>Setor {top3.iloc[2]['Setor']} ({top3.iloc[2]['GV']})</h4>
                 <p><b>{top3.iloc[2]['Pontos_Acumulados']} Pts</b> ({top3.iloc[2]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p>{top3.iloc[2]['Selo']}</p>
             </div>
@@ -189,6 +205,7 @@ with tab1:
             [
                 "Posicao",
                 "Unidade",
+                "GV",
                 "Setor",
                 "Pontos_Acumulados",
                 "Pontos_Possiveis",
@@ -198,6 +215,7 @@ with tab1:
         ],
         column_config={
             "Posicao": "Posição",
+            "GV": "GV",
             "Setor": "Setor / RN",
             "Pontos_Acumulados": "Pontos Obtidos",
             "Pontos_Possiveis": "Total Possível",
@@ -267,6 +285,7 @@ with tab3:
         df_detalhado_f[
             [
                 "Unidade",
+                "GV",
                 "Setor",
                 "Indicador",
                 "Base",
