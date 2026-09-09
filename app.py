@@ -9,7 +9,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# Estilização CSS customizada para o pódio e cartões de métricas
 st.markdown(
     """
 <style>
@@ -21,21 +20,14 @@ st.markdown(
         border: 1px solid #dee2e6;
         margin-bottom: 15px;
     }
-    .metric-card {
-        background-color: #ffffff;
-        border-left: 5px solid #28a745;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
 </style>
 """,
     unsafe_allow_html=True,
 )
 
 
-# Função para carregar os dados diretamente do Google Drive pelos IDs fornecidos
-@st.cache_data(ttl=1800)  # Recarrega automaticamente o cache a cada 30 minutos
+# Função para carregar os dados diretamente do Google Drive
+@st.cache_data(ttl=60)  # TTL reduzido para 60s para atualizar rápido os dados
 def carregar_dados():
     id_ranking = "1dmqfmNxSlnbKDOQ-H-cW1UZkq6EoV1kZ"
     id_dados = "1fpjt4DrmOjSDPYyQ-1MPr7ooZNim-1rR"
@@ -48,21 +40,49 @@ def carregar_dados():
     df_ranking = pd.read_csv(url_ranking)
     df_detalhado = pd.read_csv(url_dados)
 
+    # TRAVA DE SEGURANÇA: Cria a coluna 'GV' caso o CSV no Drive ainda não tenha sido atualizado pelo Colab
+    SETORES_GV2 = [
+        "201",
+        "202",
+        "203",
+        "204",
+        "205",
+        "206",
+        "207",
+        "208",,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+    ]
+
+    if "GV" not in df_ranking.columns:
+        df_ranking["GV"] = np.where(
+            df_ranking["Setor"].isin(SETORES_GV2), "GV 2", "GV 1"
+        )
+
+    if "GV" not in df_detalhado.columns:
+        df_detalhado["GV"] = np.where(
+            df_detalhado["Setor"].isin(SETORES_GV2), "GV 2", "GV 1"
+        )
+
     return df_ranking, df_detalhado
 
 
 try:
     df_ranking, df_detalhado = carregar_dados()
 except Exception as e:
-    st.error(
-        f"Erro ao carregar os dados do Google Drive. Verifique se as permissões dos arquivos estão configuradas para 'Qualquer pessoa com o link'. Detalhes: {e}"
-    )
+    st.error(f"Erro ao carregar os dados do Google Drive: {e}")
     st.stop()
 
-# --- BARRA LATERAL: FILTROS NAVEGÁVEIS ---
+# --- BARRA LATERAL: FILTROS ---
 st.sidebar.header("⚙️ Filtros de Navegação")
 
-# 1. Filtro por Unidade / Operação
+# 1. Filtro por Unidade
 unidades_disponiveis = ["Todas"] + list(df_ranking["Unidade"].unique())
 unidade_sel = st.sidebar.selectbox("Unidade / Operação:", unidades_disponiveis)
 
@@ -75,7 +95,7 @@ else:
 
 # 2. Filtro por Gerência de Vendas (GV)
 gvs_disponiveis = ["Todas"] + sorted(
-    list(df_ranking_f["GV"].dropna().unique())
+    list(df_ranking_f["GV"].dropna().astype(str).unique())
 )
 gv_sel = st.sidebar.selectbox("Gerência de Vendas (GV):", gvs_disponiveis)
 
@@ -97,16 +117,16 @@ if setor_sel != "Todos":
         df_detalhado_f["Setor"].astype(str) == setor_sel
     ]
 
-# Recalcula a posição dinâmica no ranking conforme os filtros selecionados
+# Recalcula a posição do ranking conforme os filtros aplicados
 df_ranking_f = df_ranking_f.sort_values(
     by=["%_Atingimento_Pontos", "Pontos_Acumulados"], ascending=False
 ).reset_index(drop=True)
 df_ranking_f["Posicao"] = df_ranking_f.index + 1
 
-# --- CABEÇALHO DO DASHBOARD ---
+# --- CABEÇALHO ---
 st.title("🏆 Painel de Gamificação e Performance GP7")
 st.caption(
-    "Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs (Sede Jequié e Filial Itapetinga)"
+    "Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs"
 )
 
 # --- CARDS RESUMO ---
@@ -139,16 +159,14 @@ with c4:
 
 st.markdown("---")
 
-# --- ABAS DE NAVEGAÇÃO ---
 tab1, tab2, tab3 = st.tabs(
     ["🥇 Ranking & Selos", "📊 Metas & GAPs por Indicador", "📋 Visão Detalhada"]
 )
 
-# --- ABA 1: RANKING E PÓDIO ---
+# --- TAB 1: RANKING ---
 with tab1:
     st.subheader("Leaderboard do Mês")
 
-    # Exibição do Pódio (Top 3) quando múltiplos setores estiverem visíveis
     if len(df_ranking_f) >= 3 and setor_sel == "Todos":
         top3 = df_ranking_f.sort_values(by="Posicao").iloc[:3]
         col_p2, col_p1, col_p3 = st.columns(3)
@@ -192,9 +210,6 @@ with tab1:
                 unsafe_allow_html=True,
             )
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-    # Tabela completa de Ranking
     df_rank_display = df_ranking_f.copy()
     df_rank_display["%_Atingimento_Pontos"] = df_rank_display[
         "%_Atingimento_Pontos"
@@ -226,10 +241,9 @@ with tab1:
         hide_index=True,
     )
 
-# --- ABA 2: RESUMO POR INDICADOR ---
+# --- TAB 2: INDICADORES ---
 with tab2:
     st.subheader("Desempenho Consolidado por Indicador")
-
     resumo_kpi = (
         df_detalhado_f.groupby("Indicador")
         .agg(
@@ -277,10 +291,9 @@ with tab2:
         hide_index=True,
     )
 
-# --- ABA 3: TABELA DETALHADA ---
+# --- TAB 3: VISÃO DETALHADA ---
 with tab3:
     st.subheader("Matriz de Indicadores por Setor")
-
     st.dataframe(
         df_detalhado_f[
             [
