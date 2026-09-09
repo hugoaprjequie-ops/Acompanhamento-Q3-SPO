@@ -412,17 +412,17 @@ with tab4:
       ".", ","
   )
 
-  # 1. Pivot inicial
+  # 1. Pivot
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
       values=["Meta", "Real", "%", "GAP", "MN"],
   )
 
-  # 2. Inverte para colocar Indicador no Nível 0 (Topo) e Métricas no Nível 1 (Baixo)
+  # 2. Inverte níveis para colocar o Nome do KPI no topo e Métricas na subcoluna
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
 
-  # 3. Constroi a ordem de colunas exata para cada KPI ter Meta -> Real -> % -> GAP -> MN
+  # 3. Força a ordem exata das subcolunas dentro de cada KPI: Meta -> Real -> % -> GAP -> MN
   kpis_presentes = [
       k for k in KPIS_OFICIAIS if k in df_pivot.columns.levels[0]
   ]
@@ -431,7 +431,7 @@ with tab4:
       [kpis_presentes, subcolunas], names=["Indicador", None]
   )
 
-  # 4. Aplica a reindexação estruturada
+  # 4. Reindexação com a hierarquia correta
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
   st.dataframe(df_pivot, use_container_width=True)
