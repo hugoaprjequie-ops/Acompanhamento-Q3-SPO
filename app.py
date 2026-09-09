@@ -485,32 +485,43 @@ with tab4:
   )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
-  # Função de Formatação Condicional para a coluna %
-  def aplicar_cores_pivot(val):
-    if isinstance(val, str) and "%" in val:
-      try:
-        num = float(
-            val.replace("%", "").replace(",", ".").replace(" ", "").strip()
-        )
-        if num >= 100.0:
-          return (
-              "background-color: #c6f6d5; color: #22543d; font-weight: bold;"
-          )
-        elif num >= 95.0:
-          return (
-              "background-color: #feebc8; color: #744210; font-weight: bold;"
-          )
-        else:
-          return "background-color: #fed7d7; color: #742a2a;"
-      except:
-        pass
-    return ""
+  # Função de Formatação Condicional APLICADA EXCLUSIVAMENTE ÀS COLUNAS "%"
+  def aplicar_cores_apenas_porcentagem(data):
+    styles = pd.DataFrame("", index=data.index, columns=data.columns)
 
-  # Compatibilidade Pandas 2.1+: usa .map() se existir, senão faz fallback para .applymap()
-  if hasattr(df_pivot.style, "map"):
-    styler = df_pivot.style.map(aplicar_cores_pivot)
-  else:
-    styler = df_pivot.style.applymap(aplicar_cores_pivot)
+    # Varre apenas as colunas cujo subcabeçalho (nível 1) seja "%"
+    for col in data.columns:
+      if col[1] == "%":
+        for idx in data.index:
+          val = data.loc[idx, col]
+          if isinstance(val, str) and "%" in val:
+            try:
+              num = float(
+                  val.replace("%", "")
+                  .replace(",", ".")
+                  .replace(" ", "")
+                  .strip()
+              )
+              if num >= 100.0:
+                styles.loc[idx, col] = (
+                    "background-color: #c6f6d5; color: #22543d; font-weight:"
+                    " bold;"
+                )
+              elif num >= 95.0:
+                styles.loc[idx, col] = (
+                    "background-color: #feebc8; color: #744210; font-weight:"
+                    " bold;"
+                )
+              else:
+                styles.loc[idx, col] = (
+                    "background-color: #fed7d7; color: #742a2a;"
+                )
+            except:
+              pass
+    return styles
+
+  # Aplicação da regra por DataFrame
+  styler = df_pivot.style.apply(aplicar_cores_apenas_porcentagem, axis=None)
 
   # Renderização da Tabela via HTML
   html_table = styler.to_html()
