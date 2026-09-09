@@ -9,6 +9,18 @@ st.set_page_config(
     layout="wide",
 )
 
+# --- IMAGEM NO HEADER ---
+# Substitua pelo caminho da sua imagem salva no GitHub ou URL direta
+try:
+    st.image("header_hurdles.png", use_container_width=True)
+except Exception:
+    # Caso a imagem ainda não esteja na pasta local, tenta carregar via URL do repositório
+    st.image(
+        "https://github.com/hugoaprjequie-ops/Acompanhamento-Q3-SPO/blob/main/4d040808-a146-4bd0-b079-9d95b6195549.jpg",
+        use_container_width=True,
+    )
+
+# Estilização CSS customizada
 st.markdown(
     """
 <style>
@@ -26,8 +38,8 @@ st.markdown(
 )
 
 
-# Função para carregar os dados diretamente do Google Drive
-@st.cache_data(ttl=60)  # TTL reduzido para 60s para atualizar rápido os dados
+# Função para carregar os dados do Google Drive
+@st.cache_data(ttl=60)
 def carregar_dados():
     id_ranking = "1dmqfmNxSlnbKDOQ-H-cW1UZkq6EoV1kZ"
     id_dados = "1fpjt4DrmOjSDPYyQ-1MPr7ooZNim-1rR"
@@ -40,7 +52,6 @@ def carregar_dados():
     df_ranking = pd.read_csv(url_ranking)
     df_detalhado = pd.read_csv(url_dados)
 
-    # TRAVA DE SEGURANÇA: Cria a coluna 'GV' caso o CSV no Drive ainda não tenha sido atualizado pelo Colab
     SETORES_GV2 = [
         "201",
         "202",
@@ -82,7 +93,6 @@ except Exception as e:
 # --- BARRA LATERAL: FILTROS ---
 st.sidebar.header("⚙️ Filtros de Navegação")
 
-# 1. Filtro por Unidade
 unidades_disponiveis = ["Todas"] + list(df_ranking["Unidade"].unique())
 unidade_sel = st.sidebar.selectbox("Unidade / Operação:", unidades_disponiveis)
 
@@ -93,7 +103,6 @@ else:
     df_ranking_f = df_ranking.copy()
     df_detalhado_f = df_detalhado.copy()
 
-# 2. Filtro por Gerência de Vendas (GV)
 gvs_disponiveis = ["Todas"] + sorted(
     list(df_ranking_f["GV"].dropna().astype(str).unique())
 )
@@ -103,7 +112,6 @@ if gv_sel != "Todas":
     df_ranking_f = df_ranking_f[df_ranking_f["GV"] == gv_sel]
     df_detalhado_f = df_detalhado_f[df_detalhado_f["GV"] == gv_sel]
 
-# 3. Filtro por Setor / RN
 setores_disponiveis = ["Todos"] + sorted(
     list(df_ranking_f["Setor"].astype(str).unique())
 )
@@ -117,7 +125,6 @@ if setor_sel != "Todos":
         df_detalhado_f["Setor"].astype(str) == setor_sel
     ]
 
-# Recalcula a posição do ranking conforme os filtros aplicados
 df_ranking_f = df_ranking_f.sort_values(
     by=["%_Atingimento_Pontos", "Pontos_Acumulados"], ascending=False
 ).reset_index(drop=True)
