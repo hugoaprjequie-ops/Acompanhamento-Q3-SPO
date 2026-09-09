@@ -391,7 +391,6 @@ with tab4:
 
   df_piv_base = df_detalhado_f.copy()
 
-  # Formatação dos campos para exibição
   df_piv_base["Meta"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -412,17 +411,14 @@ with tab4:
       ".", ","
   )
 
-  # Pivot
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
       values=["Meta", "Real", "%", "GAP", "MN"],
   )
 
-  # Inverte níveis para colocar Nome do KPI no topo e métricas na subcoluna
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
 
-  # Reordena explicitamente
   kpis_presentes = [
       k for k in KPIS_OFICIAIS if k in df_pivot.columns.levels[0]
   ]
