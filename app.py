@@ -64,7 +64,7 @@ st.markdown(
     .styled-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 13px !important; /* Tipografia Aumentada */
+        font-size: 13px !important;
         font-family: Arial, sans-serif;
     }
 
@@ -85,7 +85,6 @@ st.markdown(
         color: #2d3748;
     }
 
-    /* Estilo de Impressão/Print */
     @media print {
         .stSidebar, .stTabs [data-baseweb="tab-list"] { display: none; }
         .styled-table { font-size: 11px !important; }
@@ -268,7 +267,8 @@ with tab1:
           f"""
             <div class="podium-box" style="border-top: 5px solid #ffd700;">
                 <h3 style="color:#d4af37; margin:0;">🥇 1º Lugar</h3>
-                <h4 style="margin:8px 0;">Setor {top3.iloc[0]['Setor']} ({top3.iloc[0]['GV']})</h4>
+                <h4 style="margin:8px 0 2px 0;">Setor {top3.iloc[0]['Setor']} ({top3.iloc[0]['GV']})</h4>
+                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.9rem;"><b>Revenda:</b> {top3.iloc[0]['Unidade']}</p>
                 <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[0]['Pontos_Acumulados']} Pts</b> ({top3.iloc[0]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p style="margin-top:5px;">{top3.iloc[0]['Selo']}</p>
             </div>
@@ -281,7 +281,8 @@ with tab1:
           f"""
             <div class="podium-box" style="border-top: 5px solid #c0c0c0;">
                 <h3 style="color:#8a8a8a; margin:0;">🥈 2º Lugar</h3>
-                <h4 style="margin:8px 0;">Setor {top3.iloc[1]['Setor']} ({top3.iloc[1]['GV']})</h4>
+                <h4 style="margin:8px 0 2px 0;">Setor {top3.iloc[1]['Setor']} ({top3.iloc[1]['GV']})</h4>
+                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.9rem;"><b>Revenda:</b> {top3.iloc[1]['Unidade']}</p>
                 <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[1]['Pontos_Acumulados']} Pts</b> ({top3.iloc[1]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p style="margin-top:5px;">{top3.iloc[1]['Selo']}</p>
             </div>
@@ -294,7 +295,8 @@ with tab1:
           f"""
             <div class="podium-box" style="border-top: 5px solid #cd7f32;">
                 <h3 style="color:#b06d29; margin:0;">🥉 3º Lugar</h3>
-                <h4 style="margin:8px 0;">Setor {top3.iloc[2]['Setor']} ({top3.iloc[2]['GV']})</h4>
+                <h4 style="margin:8px 0 2px 0;">Setor {top3.iloc[2]['Setor']} ({top3.iloc[2]['GV']})</h4>
+                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.9rem;"><b>Revenda:</b> {top3.iloc[2]['Unidade']}</p>
                 <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[2]['Pontos_Acumulados']} Pts</b> ({top3.iloc[2]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p style="margin-top:5px;">{top3.iloc[2]['Selo']}</p>
             </div>
@@ -489,7 +491,6 @@ with tab4:
   def aplicar_cores_apenas_porcentagem(data):
     styles = pd.DataFrame("", index=data.index, columns=data.columns)
 
-    # Varre apenas as colunas cujo subcabeçalho (nível 1) seja "%"
     for col in data.columns:
       if col[1] == "%":
         for idx in data.index:
