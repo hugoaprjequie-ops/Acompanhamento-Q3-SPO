@@ -3,14 +3,12 @@ import pandas as pd
 from PIL import Image
 import streamlit as st
 
-# Configuração da Página
 st.set_page_config(
     page_title="Acompanhamento GP7 - Ranking & Indicadores",
     page_icon="🏆",
     layout="wide",
 )
 
-# Header
 try:
   image = Image.open("4d040808-a146-4bd0-b079-9d95b6195549.jpg")
   st.image(image, use_container_width=True)
@@ -363,7 +361,7 @@ with tab3:
       hide_index=True,
   )
 
-# --- TAB 4: CONSOLIDADO POR RN (MATRIZ LADO A LADO POR INDICADOR) ---
+# --- TAB 4: CONSOLIDADO POR RN (LADO A LADO POR INDICADOR) ---
 with tab4:
   st.subheader("📌 Matriz Consolidada por RN (Visão em Colunas)")
 
@@ -388,10 +386,8 @@ with tab4:
 
   st.markdown('<div id="print-area">', unsafe_allow_html=True)
 
-  # Prepara dados para o pivot
   df_piv_base = df_detalhado_f.copy()
 
-  # Formatação personalizada de Meta e Real antes de pivocar
   df_piv_base["Meta_Str"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -406,14 +402,12 @@ with tab4:
       ".", ","
   )
 
-  # Pivot de Colunas Compostas (Indicador x Métricas)
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
       values=["Meta_Str", "Real_Str", "Ating_Str"],
   )
 
-  # Reorganiza o cabeçalho composto para ficar estilo relatório (Meta | Valid | %)
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
   df_pivot.sort_index(axis=1, level=0, inplace=True)
 
