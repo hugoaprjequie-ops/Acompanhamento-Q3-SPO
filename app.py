@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- CSS MODERNO E AJUSTES DE TIPOGRAFIA PARA PRINT ---
+# --- CSS MODERNO E RESPONSIVO (UX/UI MOBILE E DESKTOP) ---
 st.markdown(
     """
 <style>
@@ -22,40 +22,42 @@ st.markdown(
     /* Header Principal */
     .main-header {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        padding: 24px;
+        padding: 20px;
         border-radius: 12px;
         color: white;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     .main-header h1 {
         color: #ffffff !important;
         font-weight: 800;
         margin: 0;
-        font-size: 2.2rem;
+        font-size: 2rem;
     }
     .main-header p {
         color: #e0e6ed;
         margin-top: 5px;
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     /* Podium Cards */
     .podium-box {
         text-align: center;
-        padding: 20px;
+        padding: 18px;
         border-radius: 12px;
         background: #ffffff;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border: 1px solid #e1e8ed;
+        margin-bottom: 15px;
     }
 
-    /* Container Customizado de Tabela HTML para Alta Visibilidade em Print */
+    /* Container de Tabela HTML com Rolagem Fluida para Mobile */
     .table-container-print {
         width: 100%;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Rolagem suave no touch do smartphone */
         background: #ffffff;
-        padding: 15px;
+        padding: 12px;
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         border: 1px solid #e1e8ed;
@@ -66,6 +68,7 @@ st.markdown(
         border-collapse: collapse;
         font-size: 13px !important;
         font-family: Arial, sans-serif;
+        white-space: nowrap; /* Evita quebra de linha nas colunas pequenas */
     }
 
     .styled-table th {
@@ -78,11 +81,34 @@ st.markdown(
     }
 
     .styled-table td {
-        padding: 6px 4px;
+        padding: 6px 5px;
         text-align: center;
         border: 1px solid #e2e8f0;
         font-weight: 500;
         color: #2d3748;
+    }
+
+    /* --- OTIMIZAÇÕES ESPECÍFICAS PARA SMARTPHONES (MOBILE) --- */
+    @media (max-width: 768px) {
+        .main-header {
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .main-header h1 {
+            font-size: 1.5rem;
+        }
+        .main-header p {
+            font-size: 0.85rem;
+        }
+        .podium-box {
+            padding: 12px;
+        }
+        .styled-table {
+            font-size: 11px !important; /* Fonte adaptada para telas menores */
+        }
+        .styled-table th, .styled-table td {
+            padding: 5px 3px;
+        }
     }
 
     @media print {
@@ -268,7 +294,7 @@ with tab1:
             <div class="podium-box" style="border-top: 5px solid #ffd700;">
                 <h3 style="color:#d4af37; margin:0;">🥇 1º Lugar</h3>
                 <h4 style="margin:8px 0 2px 0;">Setor {top3.iloc[0]['Setor']} ({top3.iloc[0]['GV']})</h4>
-                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.9rem;"><b>Revenda:</b> {top3.iloc[0]['Unidade']}</p>
+                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.88rem;"><b>Revenda:</b> {top3.iloc[0]['Unidade']}</p>
                 <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[0]['Pontos_Acumulados']} Pts</b> ({top3.iloc[0]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p style="margin-top:5px;">{top3.iloc[0]['Selo']}</p>
             </div>
@@ -282,7 +308,7 @@ with tab1:
             <div class="podium-box" style="border-top: 5px solid #c0c0c0;">
                 <h3 style="color:#8a8a8a; margin:0;">🥈 2º Lugar</h3>
                 <h4 style="margin:8px 0 2px 0;">Setor {top3.iloc[1]['Setor']} ({top3.iloc[1]['GV']})</h4>
-                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.9rem;"><b>Revenda:</b> {top3.iloc[1]['Unidade']}</p>
+                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.88rem;"><b>Revenda:</b> {top3.iloc[1]['Unidade']}</p>
                 <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[1]['Pontos_Acumulados']} Pts</b> ({top3.iloc[1]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p style="margin-top:5px;">{top3.iloc[1]['Selo']}</p>
             </div>
@@ -296,7 +322,7 @@ with tab1:
             <div class="podium-box" style="border-top: 5px solid #cd7f32;">
                 <h3 style="color:#b06d29; margin:0;">🥉 3º Lugar</h3>
                 <h4 style="margin:8px 0 2px 0;">Setor {top3.iloc[2]['Setor']} ({top3.iloc[2]['GV']})</h4>
-                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.9rem;"><b>Revenda:</b> {top3.iloc[2]['Unidade']}</p>
+                <p style="margin:0 0 8px 0; color:#4a5568; font-size:0.88rem;"><b>Revenda:</b> {top3.iloc[2]['Unidade']}</p>
                 <p style="font-size:1.1rem; margin:0;"><b>{top3.iloc[2]['Pontos_Acumulados']} Pts</b> ({top3.iloc[2]['%_Atingimento_Pontos']:.1f}%)</p>
                 <p style="margin-top:5px;">{top3.iloc[2]['Selo']}</p>
             </div>
