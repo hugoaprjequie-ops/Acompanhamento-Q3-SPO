@@ -191,12 +191,12 @@ KPIS_OFICIAIS = [
     "Novos Compradores",
 ]
 
+# Giro SOPI removido desta lista para exibir valores inteiros em Meta e Real
 KPIS_PERCENTUAIS = [
     "Execução Menu",
     "Tarefa de Digitalização",
     "Aderência de Política Comercial",
     "Lojas Ideais",
-    "Giro SOPI",
     "Novos Compradores",
 ]
 
@@ -394,9 +394,9 @@ with tab2:
     else:
       meta_val = group["Meta"].sum()
       real_val = group["Real"].sum()
-      meta_fmt = f"{meta_val:.2f}".replace(".", ",")
-      real_fmt = f"{real_val:.2f}".replace(".", ",")
-      gap_fmt = f"{max(meta_val - real_val, 0):.2f}".replace(".", ",")
+      meta_fmt = f"{meta_val:.0f}"
+      real_fmt = f"{real_val:.0f}"
+      gap_fmt = f"{max(meta_val - real_val, 0):.0f}"
 
     ating_val = (real_val / meta_val * 100) if meta_val > 0 else 0
     pts_val = group["Pontos"].sum()
@@ -421,12 +421,12 @@ with tab3:
   df_vis_det["Meta_Fmt"] = np.where(
       df_vis_det["Indicador"].isin(KPIS_PERCENTUAIS),
       df_vis_det["Meta"].map("{:.1f}%".format).str.replace(".", ","),
-      df_vis_det["Meta"].map("{:.2f}".format).str.replace(".", ","),
+      df_vis_det["Meta"].map("{:.0f}".format),
   )
   df_vis_det["Real_Fmt"] = np.where(
       df_vis_det["Indicador"].isin(KPIS_PERCENTUAIS),
       df_vis_det["Real"].map("{:.1f}%".format).str.replace(".", ","),
-      df_vis_det["Real"].map("{:.2f}".format).str.replace(".", ","),
+      df_vis_det["Real"].map("{:.0f}".format),
   )
 
   st.dataframe(
@@ -465,7 +465,6 @@ with tab4:
 
   df_piv_base = df_detalhado_f.copy()
 
-  # Formatação dos textos
   df_piv_base["Meta_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -482,20 +481,18 @@ with tab4:
   df_piv_base["GAP_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["GAP"].map("{:.1f}%".format).str.replace(".", ","),
-      df_piv_base["GAP"].map("{:.2f}".format).str.replace(".", ","),
+      df_piv_base["GAP"].map("{:.0f}".format),
   )
   df_piv_base["MN_Fmt"] = df_piv_base["MN"].map("{:.2f}".format).str.replace(
       ".", ","
   )
 
-  # Pivot para tabela
   df_pivot = df_piv_base.pivot(
       index=["Unidade", "Setor"],
       columns="Indicador",
       values=["Meta_Fmt", "Real_Fmt", "%_Fmt", "GAP_Fmt", "MN_Fmt"],
   )
 
-  # Inverte níveis para colocar Nome do KPI no topo
   df_pivot = df_pivot.swaplevel(0, 1, axis=1)
 
   subcolunas_map = {
@@ -516,7 +513,6 @@ with tab4:
   )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
-  # Formatação condicional para as colunas %
   def aplicar_cores_apenas_porcentagem(data):
     styles = pd.DataFrame("", index=data.index, columns=data.columns)
 
@@ -552,7 +548,6 @@ with tab4:
 
   styler = df_pivot.style.apply(aplicar_cores_apenas_porcentagem, axis=None)
 
-  # Renderização em HTML
   html_table = styler.to_html()
   html_table = html_table.replace('class="dataframe"', 'class="styled-table"')
 
