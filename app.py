@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- CSS MODERNO E RESPONSIVO (UX/UI MOBILE E DESKTOP) ---
+# --- CSS MODERNO E RESPONSIVO (MOBILE E DESKTOP) ---
 st.markdown(
     """
 <style>
@@ -55,7 +55,7 @@ st.markdown(
     .table-container-print {
         width: 100%;
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Rolagem suave no touch do smartphone */
+        -webkit-overflow-scrolling: touch;
         background: #ffffff;
         padding: 12px;
         border-radius: 12px;
@@ -68,7 +68,7 @@ st.markdown(
         border-collapse: collapse;
         font-size: 13px !important;
         font-family: Arial, sans-serif;
-        white-space: nowrap; /* Evita quebra de linha nas colunas pequenas */
+        white-space: nowrap;
     }
 
     .styled-table th {
@@ -88,7 +88,6 @@ st.markdown(
         color: #2d3748;
     }
 
-    /* --- OTIMIZAÇÕES ESPECÍFICAS PARA SMARTPHONES (MOBILE) --- */
     @media (max-width: 768px) {
         .main-header {
             padding: 15px;
@@ -104,7 +103,7 @@ st.markdown(
             padding: 12px;
         }
         .styled-table {
-            font-size: 11px !important; /* Fonte adaptada para telas menores */
+            font-size: 11px !important;
         }
         .styled-table th, .styled-table td {
             padding: 5px 3px;
@@ -188,6 +187,8 @@ KPIS_OFICIAIS = [
     "Tarefa de Digitalização",
     "Atendimento Produtivo",
     "Lojas Ideais",
+    "Giro SOPI",
+    "Novos Compradores",
 ]
 
 KPIS_PERCENTUAIS = [
@@ -195,6 +196,8 @@ KPIS_PERCENTUAIS = [
     "Tarefa de Digitalização",
     "Aderência de Política Comercial",
     "Lojas Ideais",
+    "Giro SOPI",
+    "Novos Compradores",
 ]
 
 # --- FILTROS DE NAVEGAÇÃO NA SIDEBAR ---
@@ -256,7 +259,7 @@ with c2:
   media_pts = (
       df_ranking_f["Pontos_Acumulados"].mean() if not df_ranking_f.empty else 0
   )
-  st.metric("Média de Pontos (Máx 27)", f"{media_pts:.1f} pts")
+  st.metric("Média de Pontos", f"{media_pts:.1f} pts")
 
 with c3:
   media_pct = (
@@ -513,7 +516,7 @@ with tab4:
   )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
 
-  # Função de Formatação Condicional APLICADA EXCLUSIVAMENTE ÀS COLUNAS "%"
+  # Formatação condicional para as colunas %
   def aplicar_cores_apenas_porcentagem(data):
     styles = pd.DataFrame("", index=data.index, columns=data.columns)
 
@@ -547,10 +550,9 @@ with tab4:
               pass
     return styles
 
-  # Aplicação da regra por DataFrame
   styler = df_pivot.style.apply(aplicar_cores_apenas_porcentagem, axis=None)
 
-  # Renderização da Tabela via HTML
+  # Renderização em HTML
   html_table = styler.to_html()
   html_table = html_table.replace('class="dataframe"', 'class="styled-table"')
 
