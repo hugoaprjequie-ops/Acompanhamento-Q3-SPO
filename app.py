@@ -191,7 +191,6 @@ KPIS_OFICIAIS = [
     "Novos Compradores",
 ]
 
-# Giro SOPI removido desta lista para exibir valores inteiros em Meta e Real
 KPIS_PERCENTUAIS = [
     "Execução Menu",
     "Tarefa de Digitalização",
@@ -275,11 +274,10 @@ with c4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- NAVEGAÇÃO DE ABAS ---
-tab1, tab2, tab3, tab4 = st.tabs([
+# --- NAVEGAÇÃO DE ABAS (SEM 'VISÃO DETALHADA') ---
+tab1, tab2, tab3 = st.tabs([
     "🥇 Ranking & Selos",
     "📊 Metas & GAPs por Indicador",
-    "📋 Visão Detalhada",
     "📌 Consolidado por RN",
 ])
 
@@ -413,54 +411,8 @@ with tab2:
   df_resumo_final = pd.DataFrame(list_kpi_resumo)
   st.dataframe(df_resumo_final, use_container_width=True, hide_index=True)
 
-# --- TAB 3: VISÃO DETALHADA ---
+# --- TAB 3: CONSOLIDADO POR RN ---
 with tab3:
-  st.subheader("Matriz de Indicadores por Setor")
-
-  df_vis_det = df_detalhado_f.copy()
-  df_vis_det["Meta_Fmt"] = np.where(
-      df_vis_det["Indicador"].isin(KPIS_PERCENTUAIS),
-      df_vis_det["Meta"].map("{:.1f}%".format).str.replace(".", ","),
-      df_vis_det["Meta"].map("{:.0f}".format),
-  )
-  df_vis_det["Real_Fmt"] = np.where(
-      df_vis_det["Indicador"].isin(KPIS_PERCENTUAIS),
-      df_vis_det["Real"].map("{:.1f}%".format).str.replace(".", ","),
-      df_vis_det["Real"].map("{:.0f}".format),
-  )
-
-  st.dataframe(
-      df_vis_det[[
-          "Unidade",
-          "GV",
-          "Setor",
-          "Indicador",
-          "Base",
-          "Meta_Fmt",
-          "Real_Fmt",
-          "%",
-          "GAP",
-          "MN",
-          "Pontos",
-      ]],
-      column_config={
-          "Meta_Fmt": "Meta",
-          "Real_Fmt": "Real",
-          "%": st.column_config.NumberColumn("% Atingimento", format="%.1f%%"),
-          "GAP": st.column_config.NumberColumn("GAP", format="%.2f"),
-          "MN": st.column_config.NumberColumn(
-              "Mínimo Diário (MN)", format="%.2f"
-          ),
-          "Pontos": st.column_config.NumberColumn(
-              "Pontuação", format="%d pts"
-          ),
-      },
-      use_container_width=True,
-      hide_index=True,
-  )
-
-# --- TAB 4: CONSOLIDADO POR RN ---
-with tab4:
   st.subheader("📌 Matriz Consolidada por RN")
 
   df_piv_base = df_detalhado_f.copy()
