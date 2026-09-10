@@ -274,7 +274,7 @@ with c4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- NAVEGAÇÃO DE ABAS (SEM 'VISÃO DETALHADA') ---
+# --- NAVEGAÇÃO DE ABAS ---
 tab1, tab2, tab3 = st.tabs([
     "🥇 Ranking & Selos",
     "📊 Metas & GAPs por Indicador",
