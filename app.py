@@ -19,6 +19,22 @@ st.markdown(
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
+    /* Nota de Alerta no Topo */
+    .alert-banner {
+        background-color: #fff3cd;
+        border-left: 6px solid #ffc107;
+        color: #856404;
+        padding: 14px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
     /* Header Principal */
     .main-header {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -199,6 +215,27 @@ KPIS_PERCENTUAIS = [
     "Novos Compradores",
 ]
 
+# --- BANNER DE ALERTA NO TOPO ---
+st.markdown(
+    """
+    <div class="alert-banner">
+        ⚠️ <span><b>ATENÇÃO:</b> RNs e Revenda devem Certificar (>65%) para ganhar!</span>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
+# --- CABEÇALHO PRINCIPAL ---
+st.markdown(
+    """
+    <div class="main-header">
+        <h1>🏆 Incentivo SPO Q3</h1>
+        <p>Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs</p>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
 # --- FILTROS DE NAVEGAÇÃO NA SIDEBAR ---
 st.sidebar.header("⚙️ Filtros de Navegação")
 
@@ -237,17 +274,6 @@ df_ranking_f = df_ranking_f.sort_values(
 ).reset_index(drop=True)
 df_ranking_f["Posicao"] = df_ranking_f.index + 1
 
-# --- CABEÇALHO PRINCIPAL ---
-st.markdown(
-    """
-    <div class="main-header">
-        <h1>🏆 Incentivo SPO Q3</h1>
-        <p>Acompanhamento diário de Metas, Atingimentos, Pontuação e Ranking dos RNs</p>
-    </div>
-""",
-    unsafe_allow_html=True,
-)
-
 # --- METRIC CARDS ---
 c1, c2, c3, c4 = st.columns(4)
 
@@ -269,8 +295,8 @@ with c3:
   st.metric("Atingimento Médio", f"{media_pct:.1f}%")
 
 with c4:
-  elegiveis = len(df_ranking_f[df_ranking_f["%_Atingimento_Pontos"] >= 62.0])
-  st.metric("RNs Elegíveis a Selos (≥62%)", f"{elegiveis}")
+  elegiveis = len(df_ranking_f[df_ranking_f["%_Atingimento_Pontos"] >= 65.0])
+  st.metric("RNs Certificados (>65%)", f"{elegiveis}")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -361,7 +387,7 @@ with tab1:
       hide_index=True,
   )
 
-# --- TAB 2: METAS E GAPS POR INDICADOR ---
+# --- TAB 2: METAS E GAPs POR INDICADOR ---
 with tab2:
   st.subheader("Desempenho Consolidado por Indicador")
 
