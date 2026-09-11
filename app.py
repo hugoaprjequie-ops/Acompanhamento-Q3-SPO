@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import requests
 import streamlit as st
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
@@ -9,17 +10,32 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- CSS MODERNO E RESPONSIVO (MOBILE E DESKTOP) ---
+# --- CSS MODERNO E RESPONSIVO ---
 st.markdown(
     """
 <style>
-    /* Estilo Geral */
     .stApp {
         background-color: #f4f6f9;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Nota de Alerta no Topo */
+    .update-header {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        font-size: 0.82rem;
+        color: #4a5568;
+        font-weight: 500;
+        margin-bottom: 8px;
+        padding-right: 5px;
+    }
+    .update-header span {
+        background: #e2e8f0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid #cbd5e0;
+    }
+
     .alert-banner {
         background-color: #fff3cd;
         border-left: 6px solid #ffc107;
@@ -35,7 +51,6 @@ st.markdown(
         gap: 10px;
     }
 
-    /* Header Principal */
     .main-header {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         padding: 20px;
@@ -56,7 +71,6 @@ st.markdown(
         font-size: 0.95rem;
     }
 
-    /* Podium Cards */
     .podium-box {
         text-align: center;
         padding: 18px;
@@ -67,7 +81,6 @@ st.markdown(
         margin-bottom: 15px;
     }
 
-    /* Container de Tabela HTML com Rolagem Fluida para Mobile */
     .table-container-print {
         width: 100%;
         overflow-x: auto;
@@ -105,25 +118,12 @@ st.markdown(
     }
 
     @media (max-width: 768px) {
-        .main-header {
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .main-header h1 {
-            font-size: 1.5rem;
-        }
-        .main-header p {
-            font-size: 0.85rem;
-        }
-        .podium-box {
-            padding: 12px;
-        }
-        .styled-table {
-            font-size: 11px !important;
-        }
-        .styled-table th, .styled-table td {
-            padding: 5px 3px;
-        }
+        .main-header { padding: 15px; margin-bottom: 15px; }
+        .main-header h1 { font-size: 1.5rem; }
+        .main-header p { font-size: 0.85rem; }
+        .podium-box { padding: 12px; }
+        .styled-table { font-size: 11px !important; }
+        .styled-table th, .styled-table td { padding: 5px 3px; }
     }
 
     @media print {
@@ -141,14 +141,24 @@ st.markdown(
 def carregar_dados():
   id_ranking = "1dmqfmNxSlnbKDOQ-H-cW1UZkq6EoV1kZ"
   id_dados = "1fpjt4DrmOjSDPYyQ-1MPr7ooZNim-1rR"
+  id_status = "1_COLOQUE_AQUI_O_ID_DO_ARQUIVO_ULTIMA_ATUALIZACAO_TXT"
 
   url_ranking = (
       f"https://drive.google.com/uc?export=download&id={id_ranking}"
   )
   url_dados = f"https://drive.google.com/uc?export=download&id={id_dados}"
+  url_status = f"https://drive.google.com/uc?export=download&id={id_status}"
 
   df_ranking = pd.read_csv(url_ranking)
   df_detalhado = pd.read_csv(url_dados)
+
+  try:
+    res = requests.get(url_status, timeout=5)
+    ultima_atualizacao = (
+        res.text.strip() if res.status_code == 200 else "Recentemente"
+    )
+  except Exception:
+    ultima_atualizacao = "Recentemente"
 
   SETORES_GV2 = [
       "201",
@@ -183,11 +193,11 @@ def carregar_dados():
         "GV 1",
     )
 
-  return df_ranking, df_detalhado
+  return df_ranking, df_detalhado, ultima_atualizacao
 
 
 try:
-  df_ranking, df_detalhado = carregar_dados()
+  df_ranking, df_detalhado, ultima_atualizacao = carregar_dados()
 except Exception as e:
   st.error(f"Erro ao carregar os dados: {e}")
   st.stop()
@@ -215,7 +225,17 @@ KPIS_PERCENTUAIS = [
     "Novos Compradores",
 ]
 
-# --- BANNER DE ALERTA NO TOPO ---
+# --- HEADER DE ATUALIZAÇÃO ---
+st.markdown(
+    f"""
+    <div class="update-header">
+        <span>🔄 Última atualização dos dados: <b>{ultima_atualizacao}</b></span>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+
+# --- BANNER DE ALERTA ---
 st.markdown(
     """
     <div class="alert-banner">
