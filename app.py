@@ -1,3 +1,4 @@
+import io
 import numpy as np
 import pandas as pd
 import requests
@@ -459,10 +460,14 @@ with tab2:
 
 # --- TAB 3: CONSOLIDADO POR RN ---
 with tab3:
-  st.subheader("📌 Matriz Consolidada por RN")
+  col_head, col_btn = st.columns([3, 1])
+
+  with col_head:
+    st.subheader("📌 Matriz Consolidada por RN")
 
   df_piv_base = df_detalhado_f.copy()
 
+  # Formatação visual para a tabela em HTML
   df_piv_base["Meta_Fmt"] = np.where(
       df_piv_base["Indicador"].isin(KPIS_PERCENTUAIS),
       df_piv_base["Meta"].map("{:.1f}%".format).str.replace(".", ","),
@@ -510,6 +515,40 @@ with tab3:
       [kpis_presentes, ordem_subcolunas], names=["Indicador", None]
   )
   df_pivot = df_pivot.reindex(columns=novas_colunas)
+
+  # --- FUNÇÃO PARA GERAR O EXCEL DA MATRIZ ---
+  def gerar_excel_matriz(df_bruto):
+    # Cria pivô numérico para manter qualidade dos dados no Excel
+    df_excel_piv = df_bruto.pivot(
+        index=["Unidade", "Setor"],
+        columns="Indicador",
+        values=["Meta", "Real", "%", "GAP", "MN"],
+    )
+    df_excel_piv = df_excel_piv.swaplevel(0, 1, axis=1)
+
+    kpis = [k for k in KPIS_OFICIAIS if k in df_excel_piv.columns.levels[0]]
+    col_ordem = pd.MultiIndex.from_product(
+        [kpis, ["Meta", "Real", "%", "GAP", "MN"]], names=["Indicador", None]
+    )
+    df_excel_piv = df_excel_piv.reindex(columns=col_ordem)
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+      df_excel_piv.to_excel(
+          writer, sheet_name="Consolidado_RN", index=True
+      )
+    return output.getvalue()
+
+  # Botão de download na interface
+  excel_data = gerar_excel_matriz(df_detalhado_f)
+  with col_btn:
+    st.download_button(
+        label="📥 Exportar Matriz em Excel",
+        data=excel_data,
+        file_name="Matriz_Consolidada_RN.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
 
   def aplicar_cores_apenas_porcentagem(data):
     styles = pd.DataFrame("", index=data.index, columns=data.columns)
